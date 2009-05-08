@@ -1,0 +1,10 @@
+UPLOAD_DIR=upload
+DOWNLOAD_DIR=download
+ZIP_NAME=backup.zip
+AMAZON_ACCESS_KEY_ID=AMAZON_ACCESS_KEY_ID
+AMAZON_SECRET_ACCESS_KEY=AMAZON_SECRET_ACCESS_KEY
+MYSQL_DUMP_OPTS=--quick --single-transaction --all-databases -uroot -pmysql
+MYSQL_RESTORE_OPTS=-uroot -pmysql
+NUM_BACKUPS=2
+
+FILES=/opt/jetty/var/**

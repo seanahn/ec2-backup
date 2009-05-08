@@ -1,0 +1,34 @@
+#!/usr/bin/ruby
+
+require 'lib/utils'
+
+STAGING_DIR = SETTINGS["DOWNLOAD_DIR"]
+ZIP = "#{STAGING_DIR}/#{ZIP_NAME}"
+
+# establish connection to s3
+connect_to_s3
+
+# choose the backup and confirm
+backup_key = choose_backup
+puts "You're restoring the system from a backup: #{backup_key}."
+puts "1. Continue"
+puts "0. Cancel"
+print "Enter your choice:"
+Process.exit if gets.to_i != 1
+
+load_backup backup_key
+
+Dir.multiglob("#{STAGING_DIR}/**/*", :recursive=>true).reject {|path| [].include?(path)}.each do |path|
+  lastIndex = path.length - 1
+  dest_path = path[STAGING_DIR.length, lastIndex]
+  next if dest_path.match(/^\/database/) || dest_path == "/backup.zip"
+  dest_dir = File.dirname(dest_path)
+  FileUtils::mkdir_p dest_dir unless File.exists? dest_dir if File::directory? path
+
+  puts "Copying over #{path} to #{dest_dir}..." unless File::directory? path
+  FileUtils::mkdir_p dest_dir unless File.exist? dest_dir
+  FileUtils.cp_r path, dest_dir
+end
+
+puts "Restoring mysql data..."
+system("mysql #{MYSQL_RESTORE_OPTS} < #{STAGING_DIR}/database/mysql.sql")

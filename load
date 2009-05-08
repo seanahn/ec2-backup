@@ -1,0 +1,12 @@
+#!/usr/bin/ruby
+
+require 'lib/utils'
+
+STAGING_DIR = SETTINGS["DOWNLOAD_DIR"]
+ZIP = "#{STAGING_DIR}/#{ZIP_NAME}"
+
+# establish connection to s3
+connect_to_s3
+
+# load backup to staging
+load_backup choose_backup
