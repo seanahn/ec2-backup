@@ -100,7 +100,7 @@ def build_zip()
   FileUtils::mkdir_p "#{STAGING_DIR}/database" unless File.exist? "#{STAGING_DIR}/database"
 
   puts "Dumping mysql data..."
-  system("mysqldump #{MYSQL_DUMP_OPTS} > #{STAGING_DIR}/database/mysql.sql")
+  system("#{MYSQL_DUMP_CMD} > #{STAGING_DIR}/database/mysql.sql")
   Dir.multiglob(FILES, :recursive=>true).each do |path|
     dest_dir = STAGING_DIR + (File.dirname(path).match(/^\//) ? "" : "/") + File.dirname(path)
     puts "Copying over #{path} to #{dest_dir}..."
@@ -159,8 +159,8 @@ SETTINGS = load_properties "settings.properties"
 ZIP_NAME = SETTINGS["ZIP_NAME"]
 AMAZON_ACCESS_KEY_ID = SETTINGS["AMAZON_ACCESS_KEY_ID"]
 AMAZON_SECRET_ACCESS_KEY = SETTINGS["AMAZON_SECRET_ACCESS_KEY"]
-MYSQL_RESTORE_OPTS = SETTINGS["MYSQL_RESTORE_OPTS"]
-MYSQL_DUMP_OPTS = SETTINGS["MYSQL_DUMP_OPTS"]
+MYSQL_RESTORE_CMD = SETTINGS["MYSQL_RESTORE_CMD"]
+MYSQL_DUMP_CMD = SETTINGS["MYSQL_DUMP_CMD"]
 BUCKET = (SETTINGS["HOST"] != nil ? SETTINGS["HOST"] : Socket.gethostname) + '-backups'
 NUM_BACKUPS = SETTINGS["NUM_BACKUPS"].to_i
 FILES = SETTINGS["FILES"].split(",").each do |path|

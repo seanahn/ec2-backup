@@ -31,4 +31,4 @@ Dir.multiglob("#{STAGING_DIR}/**/*", :recursive=>true).reject {|path| [].include
 end
 
 puts "Restoring mysql data..."
-system("mysql #{MYSQL_RESTORE_OPTS} < #{STAGING_DIR}/database/mysql.sql")
+system("#{MYSQL_RESTORE_CMD} < #{STAGING_DIR}/database/mysql.sql")
