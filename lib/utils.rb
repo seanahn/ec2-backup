@@ -7,6 +7,8 @@ require 'facets/ziputils'
 require 'aws/s3'
 include AWS::S3
 
+STARTED = Time.now
+
 def rm_rf(filename)
   Dir["#{File.dirname(filename)}/*"].each do |file|
     next if File.basename(file) == File.basename(filename)
@@ -30,6 +32,10 @@ def load_properties(properties_filename)
     end      
   end
   properties
+end
+
+def log(message)
+  puts (Time.now - STARTED).to_s + ": " + message
 end
 
 def connect_to_s3()
@@ -95,20 +101,20 @@ def load_backup(backup_key)
 end
 
 def build_zip()
-  puts "Cleaning up #{STAGING_DIR} ..."
+  log "Cleaning up #{STAGING_DIR} ..."
   system("rm -rf #{STAGING_DIR}")
   FileUtils::mkdir_p "#{STAGING_DIR}/database" unless File.exist? "#{STAGING_DIR}/database"
 
-  puts "Dumping mysql data..."
+  log "Dumping mysql data..."
   system("#{MYSQL_DUMP_CMD} > #{STAGING_DIR}/database/mysql.sql")
   Dir.multiglob(FILES, :recursive=>true).each do |path|
     dest_dir = STAGING_DIR + (File.dirname(path).match(/^\//) ? "" : "/") + File.dirname(path)
-    puts "Copying over #{path} to #{dest_dir}..."
+    log "Copying over #{path} to #{dest_dir}..."
     FileUtils::mkdir_p dest_dir unless File.exist? dest_dir
     FileUtils.cp_r path, dest_dir
   end
 
-  puts "Zipping #{STAGING_DIR} to #{ZIP}..."
+  log "Zipping #{STAGING_DIR} to #{ZIP}..."
   pwd = Dir.pwd
   begin
     Dir.chdir STAGING_DIR
@@ -135,9 +141,9 @@ def store_backup()
   # copy over the backup
   time = Time.now
   backup_key = time.strftime "BACKUP-%Y-%m-%d %H:%M:%S"
-  puts "Sending over new backup file: " + backup_key + "..."
+  log "Sending over new backup file: " + backup_key + "..."
   S3Object.store(backup_key, open(ZIP), BUCKET)
-  puts "Successfully sent over the backup."
+  log "Successfully sent over the backup."
 
   # re-read and sort on the key
   backup_keys = []
@@ -151,7 +157,7 @@ def store_backup()
   while backup_keys.length > NUM_BACKUPS do
     key_to_delete = backup_keys.shift
     S3Object.delete(key_to_delete, BUCKET) if S3Object.exists? key_to_delete, BUCKET
-    puts "Deleted old backup: " + key_to_delete + "."
+    log "Deleted old backup: " + key_to_delete + "."
   end
 end
 
