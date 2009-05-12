@@ -19,13 +19,12 @@ Process.exit if gets.to_i != 1
 load_backup backup_key
 
 Dir.multiglob("#{STAGING_DIR}/**/*", :recursive=>true).reject {|path| [].include?(path)}.each do |path|
-  lastIndex = path.length - 1
-  dest_path = path[STAGING_DIR.length, lastIndex]
+  dest_path = path[STAGING_DIR.length, path.length - 1]
   next if dest_path.match(/^\/database/) || dest_path == "/backup.zip"
   dest_dir = File.dirname(dest_path)
   FileUtils::mkdir_p dest_dir unless File.exists? dest_dir if File::directory? path
 
-  puts "Copying over #{path} to #{dest_dir}..." unless File::directory? path
+  puts "Copying #{path} to #{dest_dir}..." unless File::directory? path
   FileUtils::mkdir_p dest_dir unless File.exist? dest_dir
   FileUtils.cp_r path, dest_dir
 end

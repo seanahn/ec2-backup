@@ -9,13 +9,6 @@ include AWS::S3
 
 STARTED = Time.now
 
-def rm_rf(filename)
-  Dir["#{File.dirname(filename)}/*"].each do |file|
-    next if File.basename(file) == File.basename(filename)
-    FileUtils.rm_rf file, :noop => true, :verbose => true
-  end
-end
-
 def load_properties(properties_filename)
   properties = {}
   File.open(properties_filename, 'r') do |properties_file|
@@ -39,7 +32,7 @@ def log(message)
 end
 
 def connect_to_s3()
-  puts  "Connecting to Amazon S3: #{AMAZON_ACCESS_KEY_ID}/#{AMAZON_SECRET_ACCESS_KEY}..."
+  puts "Connecting to Amazon S3: #{AMAZON_ACCESS_KEY_ID}/#{AMAZON_SECRET_ACCESS_KEY}..."
   Base.establish_connection!(
     :access_key_id     => AMAZON_ACCESS_KEY_ID,
     :secret_access_key => AMAZON_SECRET_ACCESS_KEY
@@ -50,7 +43,7 @@ def choose_backup()
   # if no backup is found, then exit
   puts "Backup bucket: " + BUCKET
   begin
-    bucket = Bucket.find(BUCKET)
+    Bucket.find(BUCKET)
   rescue ResponseError => error
     puts "No back-ups found for this node: " + BUCKET + "."
     Process.exit
@@ -58,8 +51,7 @@ def choose_backup()
 
   # read and sort on the key
   backup_keys = []
-  bucket = Bucket.find(BUCKET)
-  bucket.objects.each do |bucket|
+  Bucket.find(BUCKET).objects.each do |bucket|
     backup_keys |= [bucket.key]
   end
   backup_keys.sort! { |x, y| y <=> x }
@@ -71,7 +63,7 @@ def choose_backup()
   print "Enter your choice:"
   version = gets.to_i
 
-  Process.exit if version == 0 || version <= 0 || version > backup_keys.length
+  Process.exit unless version > 0 && version <= backup_keys.length
 
   backup_keys[version-1]
 end
@@ -109,7 +101,7 @@ def build_zip()
   system("#{MYSQL_DUMP_CMD} > #{STAGING_DIR}/database/mysql.sql")
   Dir.multiglob(FILES, :recursive=>true).each do |path|
     dest_dir = STAGING_DIR + (File.dirname(path).match(/^\//) ? "" : "/") + File.dirname(path)
-    log "Copying over #{path} to #{dest_dir}..."
+    log "Copying #{path} to #{dest_dir}..."
     FileUtils::mkdir_p dest_dir unless File.exist? dest_dir
     FileUtils.cp_r path, dest_dir
   end
@@ -127,9 +119,8 @@ end
 def ensure_bucket()
   puts "Backup bucket: " + BUCKET
   begin
-    bucket = Bucket.find(BUCKET)
-    bucket.objects.each do |bucket|
-      puts "Found backup: " + bucket.key
+    Bucket.find(BUCKET).objects.each do |backup|
+      puts "Found backup: " + backup.key
     end
   rescue ResponseError => error
     Bucket.create BUCKET
@@ -138,7 +129,7 @@ def ensure_bucket()
 end
 
 def store_backup()
-  # copy over the backup
+  # send the backup
   time = Time.now
   backup_key = time.strftime "BACKUP-%Y-%m-%d %H:%M:%S"
   log "Sending over new backup file: " + backup_key + "..."
@@ -147,11 +138,10 @@ def store_backup()
 
   # re-read and sort on the key
   backup_keys = []
-  bucket = Bucket.find BUCKET
-  bucket.objects.each do |bucket|
-    backup_keys |= [bucket.key]
+  Bucket.find(BUCKET).objects.each do |backup|
+    backup_keys |= [backup.key]
   end
-  backup_keys = backup_keys.sort
+  backup_keys.sort!
 
   # remove old revisions except the last 2
   while backup_keys.length > NUM_BACKUPS do
