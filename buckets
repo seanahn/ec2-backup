@@ -1,0 +1,20 @@
+#!/usr/bin/ruby
+
+require 'lib/utils'
+
+# establish connection to s3
+connect_to_s3
+
+# list buckets
+bucket_names = []
+Service.buckets.each do |bucket|
+  bucket_names |= [bucket.name]
+end
+
+bucket_names.sort!.each do |bucket_name|
+  print bucket_name 
+  begin
+    puts "(" + Bucket.find(bucket_name).objects.size.to_s + " objects)"
+  rescue
+  end
+end
