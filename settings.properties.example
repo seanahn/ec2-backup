@@ -5,7 +5,7 @@ AMAZON_ACCESS_KEY_ID=AMAZON_ACCESS_KEY_ID
 AMAZON_SECRET_ACCESS_KEY=AMAZON_SECRET_ACCESS_KEY
 NUM_BACKUPS=12
 
-HOST=host1
+#HOST=host1
 MYSQL_DUMP_CMD=/opt/mysql/bin/mysqldump --quick --single-transaction --all-databases -uroot -pmysql
 MYSQL_RESTORE_CMD=/opt/mysql/bin/mysql -uroot -pmysql
 FILES=/opt/jetty/var/**
